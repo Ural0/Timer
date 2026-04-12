@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zaman Yönetimi Uygulaması</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #sidebar { transition: transform 0.3s ease-in-out; left: 0; }
+        .sidebar-hidden { transform: translateX(-100%); }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <!-- Üst Bar -->
+    <header class="bg-indigo-600 text-white p-4 flex justify-between items-center shadow-lg relative z-40">
+        <button id="menu-toggle" class="p-2 hover:bg-indigo-700 rounded-lg">
+            <i data-lucide="menu"></i>
+        </button>
+        <h1 id="header-title" class="text-xl font-bold">Saat</h1>
+        <div class="w-10"></div> <!-- Dengeleme için -->
+    </header>
+
+    <!-- Sol Açılır Menü -->
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white shadow-2xl z-50 sidebar-hidden border-r">
+        <div class="p-4 flex justify-between items-center border-b bg-indigo-50">
+            <span class="font-bold text-indigo-600">MENÜ</span>
+            <button id="menu-close" class="text-gray-500 hover:text-red-500"><i data-lucide="x"></i></button>
+        </div>
+        <nav class="p-2 space-y-1 overflow-y-auto h-full pb-20">
+            <a href="#" onclick="showPage('clock', 'Saat')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="clock" class="mr-2"></i> Saat</a>
+            <a href="#" onclick="showPage('world-clock', 'Dünya Saati')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="globe" class="mr-2"></i> Dünya Saati</a>
+            <a href="#" onclick="showPage('pomodoro', 'Pomodoro')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="brain" class="mr-2"></i> Pomodoro</a>
+            <a href="#" onclick="showPage('stopwatch', 'Kronometre')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="timer" class="mr-2"></i> Kronometre</a>
+            <a href="#" onclick="showPage('countdown', 'Geri Sayım')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="hourglass" class="mr-2"></i> Geri Sayım</a>
+            <a href="#" onclick="showPage('date-info', 'Tarih İşlemleri')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="calendar" class="mr-2"></i> Tarih Hesaplama</a>
+            <a href="#" onclick="showPage('expiry', 'Son Kullanma')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="calendar-x" class="mr-2"></i> Ablaufdatum</a>
+            <a href="#" onclick="showPage('age-calc', 'Yaş Hesapla')" class="flex items-center p-3 hover:bg-indigo-50 rounded text-gray-700"><i data-lucide="user" class="mr-2"></i> Yaş Hesapla</a>
+        </nav>
+    </aside>
+
+    <!-- Ana İçerik Alanı -->
+    <main class="p-6 h-screen overflow-y-auto">
+        
+        <!-- SAAT SAYFASI -->
+        <section id="clock" class="page active text-center mt-20">
+            <div class="text-7xl font-mono font-bold text-indigo-600" id="current-time">00:00:00</div>
+            <div class="text-2xl text-gray-500 mt-4" id="current-date-display">Yükleniyor...</div>
+        </section>
+
+        <!-- DÜNYA SAATİ SAYFASI -->
+        <section id="world-clock" class="page">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="world-clocks-container">
+                <!-- JS ile dolacak -->
+            </div>
+        </section>
+
+        <!-- YAŞ HESAPLA -->
+        <section id="age-calc" class="page">
+            <div class="max-w-md mx-auto space-y-6">
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <label class="block mb-2 font-semibold">Adınız (İsteğe bağlı):</label>
+                    <input type="text" id="age-name" class="border p-2 w-full mb-4 rounded" placeholder="Örn: Ahmet">
+                    <label class="block mb-2 font-semibold">Doğum Tarihiniz:</label>
+                    <input type="date" id="birth-date" class="border p-2 w-full mb-4 rounded">
+                    <button onclick="calculateAge()" class="bg-indigo-600 text-white w-full py-2 rounded font-bold hover:bg-indigo-700">Hesapla ve Kaydet</button>
+                    <div id="age-result" class="mt-4 text-center text-xl font-bold text-indigo-600"></div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-xl shadow-md">
+                    <h3 class="font-bold border-b mb-4 pb-2">Kayıtlı Hesaplamalar</h3>
+                    <ul id="age-history" class="space-y-2 max-h-60 overflow-y-auto"></ul>
+                    <button onclick="clearAgeHistory()" class="mt-4 text-sm text-red-500 underline">Geçmişi Temizle</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- POMODORO -->
+        <section id="pomodoro" class="page">
+            <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md text-center">
+                <h2 class="text-2xl mb-4 font-bold" id="pomo-status">Odaklanma Zamanı</h2>
+                <div class="text-6xl font-mono mb-6 text-red-500" id="pomo-timer">25:00</div>
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="startPomodoro()" class="bg-green-500 text-white px-6 py-2 rounded-lg">Başlat</button>
+                    <button onclick="resetPomodoro()" class="bg-gray-500 text-white px-6 py-2 rounded-lg">Sıfırla</button>
+                </div>
+                <h3 class="text-left font-bold mb-2">Haftalık İstatistik</h3>
+                <canvas id="pomoChart" width="400" height="200"></canvas>
+            </div>
+        </section>
+
+        <!-- KRONOMETRE -->
+        <section id="stopwatch" class="page text-center">
+            <div class="text-7xl font-mono mb-8" id="stopwatch-display">00:00:00.00</div>
+            <div class="flex justify-center gap-4">
+                <button id="sw-start" class="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold">Başlat</button>
+                <button id="sw-reset" class="bg-gray-400 text-white px-8 py-3 rounded-full font-bold">Sıfırla</button>
+            </div>
+        </section>
+
+        <!-- TARİH İŞLEMLERİ -->
+        <section id="date-info" class="page">
+            <div class="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded shadow-lg">
+                    <h3 class="font-bold mb-4 flex items-center"><i data-lucide="plus-circle" class="mr-2 text-green-500"></i> Tarih Ekle/Çıkar</h3>
+                    <input type="date" id="date-base" class="border p-2 w-full mb-3 rounded">
+                    <input type="number" id="date-offset" placeholder="Gün sayısı (+ veya -)" class="border p-2 w-full mb-3 rounded">
+                    <button onclick="calcDateOffset()" class="bg-indigo-600 text-white w-full py-2 rounded">Hesapla</button>
+                    <p id="date-offset-res" class="mt-4 font-bold text-center text-lg"></p>
+                </div>
+                <div class="bg-white p-6 rounded shadow-lg">
+                    <h3 class="font-bold mb-4 flex items-center"><i data-lucide="minus-circle" class="mr-2 text-blue-500"></i> İki Tarih Arası Fark</h3>
+                    <input type="date" id="date-diff-1" class="border p-2 w-full mb-3 rounded">
+                    <input type="date" id="date-diff-2" class="border p-2 w-full mb-3 rounded">
+                    <button onclick="calcDateDiff()" class="bg-indigo-600 text-white w-full py-2 rounded">Hesapla</button>
+                    <p id="date-diff-res" class="mt-4 font-bold text-center text-lg"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GERİ SAYIM -->
+        <section id="countdown" class="page">
+            <div class="max-w-sm mx-auto bg-white p-8 rounded-2xl shadow-xl text-center border-t-4 border-indigo-600">
+                <div class="flex gap-2 mb-6">
+                    <div class="flex-1"><label class="text-xs uppercase">Saat</label><input type="number" id="cd-h" value="0" class="border p-2 w-full text-center text-xl rounded"></div>
+                    <div class="flex-1"><label class="text-xs uppercase">Dak</label><input type="number" id="cd-m" value="0" class="border p-2 w-full text-center text-xl rounded"></div>
+                    <div class="flex-1"><label class="text-xs uppercase">San</label><input type="number" id="cd-s" value="0" class="border p-2 w-full text-center text-xl rounded"></div>
+                </div>
+                <div class="text-5xl font-mono mb-6 bg-gray-100 py-4 rounded" id="cd-display">00:00:00</div>
+                <button onclick="startCountdown()" class="bg-indigo-600 text-white w-full py-3 rounded-lg font-bold">SAYIMI BAŞLAT</button>
+            </div>
+        </section>
+
+        <!-- ABLAUFDATUM -->
+        <section id="expiry" class="page">
+            <div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+                <h3 class="font-bold mb-4">Son Kullanma Tarihi Takibi</h3>
+                <input type="date" id="exp-date" class="border p-2 w-full mb-2">
+                <button onclick="checkExpiry()" class="bg-orange-500 text-white w-full py-2 rounded">Kalan Süreyi Gör</button>
+                <p id="exp-res" class="mt-4 text-center font-bold text-xl"></p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- MENÜ YÖNETİMİ (SOL) ---
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menu-toggle');
+        const menuClose = document.getElementById('menu-close');
+        const headerTitle = document.getElementById('header-title');
+
+        menuToggle.onclick = () => sidebar.classList.remove('sidebar-hidden');
+        menuClose.onclick = () => sidebar.classList.add('sidebar-hidden');
+
+        function showPage(pageId, title) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            headerTitle.innerText = title;
+            sidebar.classList.add('sidebar-hidden');
+            lucide.createIcons();
+            if(pageId === 'world-clock') updateWorldClocks();
+        }
+
+        // --- CANLI SAAT ---
+        function updateTime() {
+            const now = new Date();
+            if(document.getElementById('current-time')) {
+                document.getElementById('current-time').innerText = now.toLocaleTimeString('tr-TR');
+                document.getElementById('current-date-display').innerText = now.toLocaleDateString('tr-TR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
+        setInterval(updateTime, 1000);
+
+        // --- DÜNYA SAATLERİ (ÇALIŞAN) ---
+        const cities = [
+            { name: 'İstanbul', zone: 'Europe/Istanbul' },
+            { name: 'Londra', zone: 'Europe/London' },
+            { name: 'New York', zone: 'America/New_York' },
+            { name: 'Tokyo', zone: 'Asia/Tokyo' }
+        ];
+
+        function updateWorldClocks() {
+            const container = document.getElementById('world-clocks-container');
+            container.innerHTML = '';
+            cities.forEach(city => {
+                const timeStr = new Date().toLocaleTimeString('tr-TR', { timeZone: city.zone });
+                const div = document.createElement('div');
+                div.className = "bg-white p-4 rounded-lg shadow text-center border-b-4 border-indigo-500";
+                div.innerHTML = `<h4 class="font-bold text-gray-600">${city.name}</h4><p class="text-2xl font-mono mt-2">${timeStr}</p>`;
+                container.appendChild(div);
+            });
+        }
+        setInterval(() => {
+            if(document.getElementById('world-clock').classList.contains('active')) updateWorldClocks();
+        }, 1000);
+
+        // --- YAŞ HESAPLA VE KAYDET ---
+        let ageLogs = JSON.parse(localStorage.getItem('ageLogs') || '[]');
+
+        function renderAgeHistory() {
+            const list = document.getElementById('age-history');
+            list.innerHTML = ageLogs.map((log, index) => `
+                <li class="text-sm bg-gray-50 p-2 rounded flex justify-between border-l-4 border-indigo-400">
+                    <span><strong>${log.name || 'İsimsiz'}:</strong> ${log.result}</span>
+                    <span class="text-gray-400 text-xs">${log.date}</span>
+                </li>
+            `).reverse().join('');
+        }
+
+        function calculateAge() {
+            const birthInput = document.getElementById('birth-date').value;
+            const nameInput = document.getElementById('age-name').value;
+            if(!birthInput) return;
+
+            const birthDate = new Date(birthInput);
+            const now = new Date();
+            let age = now.getFullYear() - birthDate.getFullYear();
+            const m = now.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && now.getDate() < birthDate.getDate())) age--;
+
+            const diffTime = Math.abs(now - birthDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            const resultText = `${age} Yaş (${diffDays} gün)`;
+            document.getElementById('age-result').innerText = resultText;
+
+            // Kaydet
+            ageLogs.push({
+                name: nameInput,
+                result: resultText,
+                date: new Date().toLocaleDateString('tr-TR')
+            });
+            localStorage.setItem('ageLogs', JSON.stringify(ageLogs));
+            renderAgeHistory();
+        }
+
+        function clearAgeHistory() {
+            ageLogs = [];
+            localStorage.removeItem('ageLogs');
+            renderAgeHistory();
+        }
+
+        // --- KRONOMETRE ---
+        let swInterval, swStartTime, swRunning = false;
+        document.getElementById('sw-start').onclick = function() {
+            if (!swRunning) {
+                swStartTime = Date.now() - (swStartTime || 0);
+                swInterval = setInterval(() => {
+                    let diff = Date.now() - swStartTime;
+                    let ms = Math.floor((diff % 1000) / 10);
+                    let s = Math.floor((diff / 1000) % 60);
+                    let m = Math.floor((diff / 60000) % 60);
+                    document.getElementById('stopwatch-display').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(ms).padStart(2,'0')}`;
+                }, 10);
+                this.innerText = "Durdur"; swRunning = true;
+                this.classList.replace('bg-indigo-600', 'bg-red-500');
+            } else {
+                clearInterval(swInterval);
+                swStartTime = Date.now() - swStartTime;
+                this.innerText = "Devam Et"; swRunning = false;
+                this.classList.replace('bg-red-500', 'bg-green-500');
+            }
+        };
+        document.getElementById('sw-reset').onclick = function() {
+            clearInterval(swInterval); swStartTime = 0; swRunning = false;
+            document.getElementById('stopwatch-display').innerText = "00:00:00.00";
+            document.getElementById('sw-start').innerText = "Başlat";
+            document.getElementById('sw-start').className = "bg-indigo-600 text-white px-8 py-3 rounded-full font-bold";
+        };
+
+        // --- TARİH FONKSİYONLARI ---
+        function calcDateOffset() {
+            const base = new Date(document.getElementById('date-base').value);
+            const offset = parseInt(document.getElementById('date-offset').value);
+            if(isNaN(base) || isNaN(offset)) return;
+            base.setDate(base.getDate() + offset);
+            document.getElementById('date-offset-res').innerText = "Yeni Tarih: " + base.toLocaleDateString('tr-TR');
+        }
+        function calcDateDiff() {
+            const d1 = new Date(document.getElementById('date-diff-1').value);
+            const d2 = new Date(document.getElementById('date-diff-2').value);
+            if(isNaN(d1) || isNaN(d2)) return;
+            const diff = Math.abs(d2 - d1);
+            const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('date-diff-res').innerText = `${days} Gün Fark Var`;
+        }
+
+        // --- GERI SAYIM ---
+        let cdInterval;
+        function startCountdown() {
+            clearInterval(cdInterval);
+            let h = parseInt(document.getElementById('cd-h').value) || 0;
+            let m = parseInt(document.getElementById('cd-m').value) || 0;
+            let s = parseInt(document.getElementById('cd-s').value) || 0;
+            let total = (h * 3600) + (m * 60) + s;
+            if(total <= 0) return;
+            cdInterval = setInterval(() => {
+                total--;
+                if(total < 0) { clearInterval(cdInterval); alert("Süre bitti!"); return; }
+                let hh = Math.floor(total / 3600), mm = Math.floor((total % 3600) / 60), ss = total % 60;
+                document.getElementById('cd-display').innerText = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+            }, 1000);
+        }
+
+        // --- POMODORO ---
+        let pomoInterval, pomoTime = 25 * 60, pomoLogs = JSON.parse(localStorage.getItem('pomoLogs') || '[]');
+        function startPomodoro() {
+            clearInterval(pomoInterval);
+            pomoInterval = setInterval(() => {
+                pomoTime--; updatePomoDisplay();
+                if(pomoTime <= 0) { clearInterval(pomoInterval); savePomo(); alert("Pomodoro bitti!"); }
+            }, 1000);
+        }
+        function resetPomodoro() { clearInterval(pomoInterval); pomoTime = 25 * 60; updatePomoDisplay(); }
+        function updatePomoDisplay() {
+            let m = Math.floor(pomoTime / 60), s = pomoTime % 60;
+            document.getElementById('pomo-timer').innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+        function savePomo() {
+            const today = new Date().toLocaleDateString('tr-TR');
+            pomoLogs.push({ date: today });
+            localStorage.setItem('pomoLogs', JSON.stringify(pomoLogs));
+            renderChart();
+        }
+
+        let myChart;
+        function renderChart() {
+            const ctx = document.getElementById('pomoChart').getContext('2d');
+            const dataMap = {};
+            pomoLogs.forEach(log => dataMap[log.date] = (dataMap[log.date] || 0) + 1);
+            if(myChart) myChart.destroy();
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: Object.keys(dataMap), datasets: [{ label: 'Tamamlanan', data: Object.values(dataMap), backgroundColor: '#4f46e5' }] }
+            });
+        }
+
+        function checkExpiry() {
+            const target = new Date(document.getElementById('exp-date').value);
+            const diff = target - new Date();
+            const res = document.getElementById('exp-res');
+            if(diff < 0) { res.innerText = "Süre doldu!"; res.className = "mt-4 text-center font-bold text-red-500"; }
+            else { res.innerText = Math.floor(diff / (1000*60*60*24)) + " gün kaldı."; res.className = "mt-4 text-center font-bold text-green-500"; }
+        }
+
+        // Başlat
+        updateTime();
+        renderAgeHistory();
+        renderChart();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
